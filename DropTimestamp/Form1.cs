@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -20,24 +19,34 @@ public sealed partial class Form1 : Form
 
     private void ListBox1OnDoubleClick(object? sender, EventArgs e)
     {
-        Clipboard.SetText(listBox1.SelectedItem.ToString());
+        var text = listBox1.SelectedItem?.ToString() ?? string.Empty;
+        Clipboard.SetText(text);
     }
 
-    void Form1_DragEnter(object sender, DragEventArgs e)
+    void Form1_DragEnter(object? sender, DragEventArgs e)
     {
-        if (e.Data.GetDataPresent(DataFormats.FileDrop))
+        if (e.Data != null && e.Data.GetDataPresent(DataFormats.FileDrop))
         {
             e.Effect = DragDropEffects.Copy;
         }
     }
 
-    void Form1_DragDrop(object sender, DragEventArgs e)
+    void Form1_DragDrop(object? sender, DragEventArgs e)
     {
-        var files = (string[]) e.Data.GetData(DataFormats.FileDrop);
+        if (e.Data == null)
+        {
+            return;
+        }
+
+        var files = e.Data.GetData(DataFormats.FileDrop) as string[];
+        if (files == null)
+        {
+            return;
+        }
 
         var dateTimes = files
             .SelectMany(GetFiles)
-            .SelectMany(f => new[] {f.CreationTime, f.LastWriteTime})
+            .SelectMany(f => new[] { f.CreationTime, f.LastWriteTime })
             .Select(d => d.Date)
             .Distinct()
             .OrderBy(d => d)
